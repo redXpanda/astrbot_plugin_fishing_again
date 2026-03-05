@@ -17,7 +17,8 @@ from ..repositories.abstract_repository import (
 )
 from ..domain.models import FishingRecord, TaxRecord, FishingZone
 from ..services.fishing_zone_service import FishingZoneService
-from ..utils import get_now, get_fish_template, get_today, get_last_reset_time, calculate_after_refine
+from .fish_weight_service import FishWeightService
+from ..utils import get_now, get_last_reset_time, calculate_after_refine
 
 
 class FishingService:
@@ -31,6 +32,7 @@ class FishingService:
         log_repo: AbstractLogRepository,
         buff_repo: AbstractUserBuffRepository,
         fishing_zone_service: FishingZoneService,
+        fish_weight_service: FishWeightService,
         config: Dict[str, Any],
     ):
         self.user_repo = user_repo
@@ -687,7 +689,7 @@ class FishingService:
             # 如果限定鱼或全局鱼列表为空，则从所有鱼中随机抽取一条
             return self.item_template_repo.get_random_fish(rarity)
 
-        return get_fish_template(fish_list, coins_chance)
+        return self.fish_weight_service.choose_fish(fish_list, coins_chance) # <--- 改为使用注入的服务
 
     def _get_random_high_rarity(self, zone: FishingZone = None) -> int:
         """从6星及以上鱼类中随机选择一个稀有度，兼容区域限定鱼"""
