@@ -234,10 +234,21 @@ class FishingService:
                     logger.warning(f"用户 {user_id} 的当前鱼饵已被清除，因为鱼饵模板不存在。")
 
         if user.current_bait_id is None:
-            # 随机获取一个库存鱼饵
-            random_bait_id = self.inventory_repo.get_random_bait(user.user_id)
-            if random_bait_id:
-                user.current_bait_id = random_bait_id
+            # 如果刚才有正在使用的鱼饵（刚过期或刚用完被清空），检查该款鱼饵是否还有库存
+            if cur_bait_id is not None:
+                user_bait_inventory = self.inventory_repo.get_user_bait_inventory(user_id)
+                # 如果同款鱼饵还有库存，则自动续上同款
+                if user_bait_inventory is not None and user_bait_inventory.get(cur_bait_id, 0) > 0:
+                    user.current_bait_id = cur_bait_id
+                    
+                    # 如果是限时型鱼饵，自动续期时需要重置它的生效开始时间
+                    bait_template = self.item_template_repo.get_bait_by_id(cur_bait_id)
+                    if bait_template and bait_template.duration_minutes > 0:
+                        user.bait_start_time = get_now()
+                    
+                    # 更新状态保存
+                    self.user_repo.update(user)
+                    logger.info(f"用户 {user_id} 自动续装了同款鱼饵: {cur_bait_id}")
 
         if user.current_bait_id is not None:
             bait_template = self.item_template_repo.get_bait_by_id(user.current_bait_id)
