@@ -1,4 +1,5 @@
 import random
+from astrbot.api import logger
 
 class FishWeightService:
     """处理鱼类权重计算与期望价值拟合的服务"""
@@ -63,6 +64,8 @@ class FishWeightService:
             oldest_key = next(iter(self.weight_cache))
             # 无情抹杀
             del self.weight_cache[oldest_key]
+        
+        logger.debug(f"计算权重: coins_chance={coins_chance:.2f}, base_ev={base_ev:.2f}, target_ev={target_ev:.2f}, weights={final_weights}")    
 
         return final_weights
 
