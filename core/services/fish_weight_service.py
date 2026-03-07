@@ -1,11 +1,12 @@
 import random
 import threading
+from collections import OrderedDict
 from astrbot.api import logger
 
 class FishWeightService:
     """处理鱼类权重计算与期望价值拟合的服务"""
     def __init__(self, max_cache_size=1000):
-        self.weight_cache = {}
+        self.weight_cache = OrderedDict() # 核心改动：采用正规的有序字典
         self.max_cache_size = max_cache_size # 设定最大缓存条目数
         self._cache_lock = threading.Lock() # 新增：缓存读写互斥锁
 
@@ -16,13 +17,13 @@ class FishWeightService:
         return sum(f.base_value * w for f, w in zip(fish_list, weights)) / total_weight
 
     def get_weights(self, fish_list, coins_chance):
+        
         cache_key = (tuple((f.fish_id, f.base_value) for f in fish_list), round(coins_chance, 6)) # 加入基础价值作为key的一部分
         with self._cache_lock:
             if cache_key in self.weight_cache:
-                # 把它弹出来再重新塞进去，它就会自动跑到字典的最末尾（也就是“最新鲜”的位置）
-                weights = self.weight_cache.pop(cache_key)
-                self.weight_cache[cache_key] = weights
-                return weights
+                # 直接把该键移动到最末尾（标记为最新鲜）
+                self.weight_cache.move_to_end(cache_key)
+                return self.weight_cache[cache_key]
 
         base_weights = [1.0 for _ in fish_list] 
         base_ev = self._calculate_ev(fish_list, base_weights)
@@ -34,7 +35,7 @@ class FishWeightService:
         if target_ev >= max_value:
             final_weights = [1.0 if f.base_value == max_value else 0.0 for f in fish_list]
         elif target_ev <= min_value: # 新增：期望下界保护
-            return [1.0 if f.base_value == min_value else 0.0 for f in fish_list]
+            final_weights = [1.0 if f.base_value == min_value else 0.0 for f in fish_list]
         else:
             low, high = -50.0, 50.0 # 修改：扩大搜索范围
             final_weights = base_weights
@@ -63,16 +64,19 @@ class FishWeightService:
 
         self.weight_cache[cache_key] = final_weights
         
-        # 核心淘汰逻辑：如果塞入后超过了设定的最大容量
+        # 淘汰逻辑：如果塞入后超过了设定的最大容量
         with self._cache_lock:
-            if len(self.weight_cache) > self.max_cache_size:
-                # 防止在当前线程计算期间，另一个线程已经把这个 Key 算好并塞进去了
-                if cache_key not in self.weight_cache:
-                    self.weight_cache[cache_key] = final_weights
-                    if len(self.weight_cache) > self.max_cache_size:
-                        oldest_key = next(iter(self.weight_cache))
-                        del self.weight_cache[oldest_key]
-
+            # 无论前面发生了什么，直接写入/覆盖，确保数据最新
+            self.weight_cache[cache_key] = final_weights
+            # 标记为最新鲜
+            self.weight_cache.move_to_end(cache_key)
+            
+            # 修正：使用 while 替代 if，确保极端并发下绝对不会超出容量限制
+            while len(self.weight_cache) > self.max_cache_size:
+                # 弹出最老的键值对
+                self.weight_cache.popitem(last=False)
+                
+        # 锁释放后，安全返回局部变量
         return final_weights
 
     def choose_fish(self, new_fish_list, coins_chance):
