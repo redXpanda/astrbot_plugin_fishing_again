@@ -41,6 +41,7 @@ from .core.services.loan_service import LoanService
 from .core.services.fish_weight_service import FishWeightService # 新增钓鱼权重Service
 
 from .core.database.migration import run_migrations
+from .core.plugin_storage import resolve_plugin_data_dir
 
 # ==========================================================
 # 导入所有指令函数
@@ -84,14 +85,10 @@ class FishingPlugin(Star):
         self.plugin_id = "astrbot_plugin_fishing_again"
 
         # --- 1.1. 数据与临时文件路径管理 ---
-        try:
-            # 优先使用框架提供的 get_data_dir 方法
-            self.data_dir = self.context.get_data_dir(self.plugin_id)
-        except (AttributeError, TypeError):
-            # 如果方法不存在或调用失败，则回退到旧的硬编码路径
-            logger.warning(f"无法使用 self.context.get_data_dir('{self.plugin_id}'), 将回退到旧的 'data/' 目录。")
-            self.data_dir = "data"
-        
+        plugin_data_name = getattr(self, "name", None) or self.plugin_id
+        self.data_dir = str(resolve_plugin_data_dir(plugin_data_name))
+        logger.info(f"插件数据目录已初始化: {self.data_dir}")
+
         self.tmp_dir = os.path.join(self.data_dir, "tmp")
         os.makedirs(self.tmp_dir, exist_ok=True)
 
