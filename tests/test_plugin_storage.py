@@ -23,9 +23,9 @@ def test_resolve_plugin_data_dir_uses_plugin_data(tmp_path, monkeypatch):
         astrbot_path_module,
     )
 
-    sys.modules.pop("astrbot_plugin_fishing.core.plugin_storage", None)
+    sys.modules.pop("astrbot_plugin_fishing_again.core.plugin_storage", None)
     plugin_storage = importlib.import_module(
-        "astrbot_plugin_fishing.core.plugin_storage"
+        "astrbot_plugin_fishing_again.core.plugin_storage"
     )
 
     data_dir = plugin_storage.resolve_plugin_data_dir("astrbot_plugin_fishing_again")
