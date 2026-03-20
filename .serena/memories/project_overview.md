@@ -1,0 +1,4 @@
+- 项目是 AstrBot Star 插件 `astrbot_plugin_fishing_again`，提供钓鱼、背包、商店、市场、抽卡、交易所、社交互动和 Web 后台管理等玩法。
+- 技术栈以 Python 为主，依赖包含 `pyyaml`、`quart`、`requests`、`numpy`，数据层以 SQLite 仓储和 migration 为核心。
+- 入口在 `main.py`，插件元数据在 `metadata.yaml`，配置 schema 在 `_conf_schema.json`。
+- 代码结构以分层为主：`handlers/` 处理命令与事件，`core/services/` 处理业务规则，`core/repositories/` 负责 SQLite 访问，`core/domain/` 放领域模型，`core/database/` 放数据库和迁移，`manager/` 是 Quart 后台，`draw/` 负责图片渲染，`tests/` 放单元测试。

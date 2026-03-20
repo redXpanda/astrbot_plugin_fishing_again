@@ -1,0 +1,6 @@
+- 先判断需求属于 handler、service、repo、migration、manager 哪一层，再做增量修改，避免跨层堆逻辑。
+- 优先复用已有 service / repo，不做无收益的大重构；核心逻辑通常落在 `core/services/`。
+- 新增配置项时同时更新 `_conf_schema.json`、`main.py` 的配置读取与实际消费配置的 service。
+- 修改数据库结构时优先新增 `core/database/migrations/` migration，兼容旧存档很重要。
+- 代码库注释语言以中文为主，修改时保持与周边文件一致。
+- 修改输入解析、权重算法、交易/经济/背包结算等核心逻辑后，应补或运行对应测试。

@@ -1,0 +1,6 @@
+- 列目录：`Get-ChildItem -Force`
+- 搜索文本：`rg "pattern"`
+- 搜索文件：`rg --files`
+- 运行测试：`pytest`
+- 运行指定测试：`pytest tests/test_weight.py`
+- 如果需要项目虚拟环境，优先使用 AstrBot 根目录下的 `.venv`。
