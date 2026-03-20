@@ -414,8 +414,8 @@ class SqliteRedPacketRepository:
             expired_time = datetime.now() - timedelta(hours=24)
             
             cursor.execute("""
-                SELECT id FROM red_packets
-                WHERE expired_at < ? AND status IN ('active', 'expired')
+                SELECT packet_id FROM red_packets
+                WHERE expires_at < ?
             """, (expired_time,))
             
             expired_packets = cursor.fetchall()
@@ -428,11 +428,11 @@ class SqliteRedPacketRepository:
             placeholders = ','.join(['?'] * len(packet_ids))
             
             cursor.execute(f"""
-                DELETE FROM red_packet_records WHERE red_packet_id IN ({placeholders})
+                DELETE FROM red_packet_records WHERE packet_id IN ({placeholders})
             """, packet_ids)
             
             cursor.execute(f"""
-                DELETE FROM red_packets WHERE id IN ({placeholders})
+                DELETE FROM red_packets WHERE packet_id IN ({placeholders})
             """, packet_ids)
             
             conn.commit()
