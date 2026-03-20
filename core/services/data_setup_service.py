@@ -142,15 +142,15 @@ class DataSetupService:
         # --- 填充抽卡池具体物品 ---
         # 检查是否已填充，避免重复
         if not self.gacha_repo.get_pool_items(1):
-            self.gacha_repo.add_pool_item(1, {"item_type": "rod", "item_id": 4, "quantity": 1, "weight": 10}) # 星辰钓者
-            self.gacha_repo.add_pool_item(1, {"item_type": "rod", "item_id": 5, "quantity": 1, "weight": 3}) # 海神之赐
-            self.gacha_repo.add_pool_item(1, {"item_type": "rod", "item_id": 3, "quantity": 1, "weight": 30}) # 碳素纤维竿
-            self.gacha_repo.add_pool_item(1, {"item_type": "coins", "item_id": 0, "quantity": 10000, "weight": 57})
+            self._add_initial_pool_item(1, "rod", 4, 1, 10)  # 星辰钓者
+            self._add_initial_pool_item(1, "rod", 5, 1, 3)  # 海神之赐
+            self._add_initial_pool_item(1, "rod", 3, 1, 30)  # 碳素纤维竿
+            self._add_initial_pool_item(1, "coins", 0, 10000, 57)
 
         if not self.gacha_repo.get_pool_items(2):
-            self.gacha_repo.add_pool_item(2, {"item_type": "accessory", "item_id": 4, "quantity": 1, "weight": 5}) # 海洋之心
-            self.gacha_repo.add_pool_item(2, {"item_type": "accessory", "item_id": 3, "quantity": 1, "weight": 15}) # 丰收号角
-            self.gacha_repo.add_pool_item(2, {"item_type": "coins", "item_id": 0, "quantity": 20000, "weight": 80})
+            self._add_initial_pool_item(2, "accessory", 4, 1, 5)  # 海洋之心
+            self._add_initial_pool_item(2, "accessory", 3, 1, 15)  # 丰收号角
+            self._add_initial_pool_item(2, "coins", 0, 20000, 80)
 
         # --- 填充初始商店 ---
         if not self.shop_repo.get_all_shops():
@@ -345,6 +345,24 @@ class DataSetupService:
             logger.info("新道具添加完成。")
         else:
             logger.info("没有发现新的道具需要添加。")
+
+    def _add_initial_pool_item(
+        self,
+        pool_id: int,
+        item_type: str,
+        item_id: int,
+        quantity: int,
+        weight: int,
+    ):
+        """按当前仓储接口格式向初始奖池写入物品。"""
+        self.gacha_repo.add_item_to_pool(
+            pool_id,
+            {
+                "item_full_id": f"{item_type}-{item_id}",
+                "quantity": quantity,
+                "weight": weight,
+            },
+        )
 
     def ensure_system_user(self):
         """确保系统虚拟用户(SYSTEM)存在于用户表中，以满足外键约束"""
